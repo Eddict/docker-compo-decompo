@@ -14,7 +14,8 @@ env:
   BUILDX_CACHE: /tmp/.buildx-cache
 
 jobs:
-  GHRC:
+  cr_build:
+    name: Build and Push to Container Registry
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
