@@ -35,6 +35,7 @@ jobs:
           if [ "$CI_REF_NAME" == "main" ];then VERSION=latest;fi
           if [ "$CI_REF_NAME" == "dev" ];then VERSION=mightly;fi
           if [ "$CI_REF_NAME" == "dockserver" ];then VERSION=dockserver;fi
+          if [ -z "$VERSION" ];then VERSION=$CI_REF_NAME;fi
           TAGS="${DOCKER_IMAGE}:${VERSION}"
           echo "tags=${TAGS}" >> $GITHUB_OUTPUT
           echo "title=${GITHUB_REPOSITORY}" >> $GITHUB_OUTPUT
@@ -73,7 +74,7 @@ jobs:
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
-          file: ./Dockerfile
+          file: ./autocompose/Dockerfile
           platforms: ${{ env.PLATFORMS }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REGISTRY }}/${{ steps.prep.outputs.tags }}
