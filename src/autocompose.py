@@ -212,6 +212,18 @@ def generate(cname, createvolumes=False):
         "tty": cattrs.get("Config", {}).get("Tty", None),
     }
 
+    # Convert ulimits (list of dicts) to mapping required by Compose v3+
+    if isinstance(values.get("ulimits"), list):
+        ulimits_dict = {}
+        for item in values["ulimits"]:
+            name = item.get("Name")
+            if name:
+                ulimits_dict[name] = {
+                    "soft": item.get("Soft"),
+                    "hard": item.get("Hard"),
+                }
+        values["ulimits"] = ulimits_dict if ulimits_dict else None
+
     # Populate devices key if device values are present
     if cattrs.get("HostConfig", {}).get("Devices"):
         values["devices"] = [
