@@ -1,4 +1,4 @@
-name: Build Composerize CLI Image
+name: Build Decomposerize CLI Image
 
 on:
   push:
@@ -61,13 +61,13 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.CR_PAT }}
 
-      - name: Build and push Composerize CLI image
+      - name: Build and push Decomposerize CLI image
         id: docker_build
         uses: docker/build-push-action@v7
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
-          file: ./composerize/Dockerfile
+          file: ./decomposerize/Dockerfile
           platforms: ${{ env.PLATFORMS }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REGISTRY }}/${{ steps.prep.outputs.tags }}
