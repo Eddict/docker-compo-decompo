@@ -42,6 +42,7 @@ jobs:
           echo "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
+        if: env.PLATFORMS != 'linux/amd64'
         uses: docker/setup-qemu-action@v4
         with:
           platforms: ${{ env.PLATFORMS }}
