@@ -16,5 +16,9 @@ COPY src ./src
 # Install Python dependencies
 RUN poetry install
 
-# Default to bash for manual use, but both tools are available
+
+# Add smart entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/bin/sh"]
