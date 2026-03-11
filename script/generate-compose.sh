@@ -81,12 +81,13 @@ for container in $containers; do
     info_echo "$container/docker-compose.yaml is valid."
     debug_echo "Validation for $container succeeded"
 
-    # Run decomposerize on the generated YAML if script output is enabled
+    # Run decomposerize on the generated YAML
     if [ "$OUTPUT_SCRIPT" = true ]; then
       docker run --rm -i "$DOCKER_IMAGE" decomposerize < "$container/docker-compose.yaml" > "$container/docker-run.sh"
       debug_echo "Generated $container/docker-run.sh"
     else
-      debug_echo "Skipped script output for $container"
+      info_echo "docker run command for $container:"
+      docker run --rm -i "$DOCKER_IMAGE" decomposerize < "$container/docker-compose.yaml"
     fi
   else
     error_echo "$container/docker-compose.yaml has errors!"
