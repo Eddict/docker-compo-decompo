@@ -98,9 +98,9 @@ def main():
     )
 
     parser.add_argument(
-        "--minimal",
+        "--incl-defaults",
         action="store_true",
-        help="Prune default and boilerplate values for a minimal compose file",
+        help="Include all default and boilerplate values (legacy behavior)",
     )
     args = parser.parse_args()
 
@@ -350,14 +350,14 @@ def generate(cname, createvolumes=False):
     import inspect
     frame = inspect.currentframe().f_back
     args_obj = frame.f_locals.get('args', None)
-    minimal = False
-    if args_obj and hasattr(args_obj, 'minimal'):
-        minimal = getattr(args_obj, 'minimal', False)
+    incl_defaults = False
+    if args_obj and hasattr(args_obj, 'incl_defaults'):
+        incl_defaults = getattr(args_obj, 'incl_defaults', False)
 
     for key in values:
         value = values[key]
         if value not in IGNORE_VALUES:
-            if minimal and is_minimal_default(key, value):
+            if not incl_defaults and is_minimal_default(key, value):
                 continue
             ct[key] = value
 
