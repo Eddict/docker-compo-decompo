@@ -17,8 +17,7 @@ COPY src ./src
 RUN poetry install
 
 
-# Add smart entrypoint
-COPY entrypoint.sh /entrypoint.sh
+COPY docker/combined/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/bin/sh"]
