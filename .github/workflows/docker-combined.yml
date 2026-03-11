@@ -35,9 +35,9 @@ jobs:
         run: |
           PLATFORMS=""
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            [[ ${{ github.event.inputs.amd64 }} ]] && PLATFORMS+="linux/amd64,"
-            [[ ${{ github.event.inputs.armhf }} ]] && PLATFORMS+="linux/armhf,"
-            [[ ${{ github.event.inputs.arm64 }} ]] && PLATFORMS+="linux/arm64,"
+            [[ ${{ inputs.amd64 }} ]] && PLATFORMS+="linux/amd64,"
+            [[ ${{ inputs.armhf }} ]] && PLATFORMS+="linux/armhf,"
+            [[ ${{ inputs.arm64 }} ]] && PLATFORMS+="linux/arm64,"
             PLATFORMS="${PLATFORMS%,}"
           fi
           echo "PLATFORMS=$PLATFORMS"
