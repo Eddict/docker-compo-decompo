@@ -33,12 +33,14 @@ jobs:
       - name: Set platforms from workflow inputs
         id: platforms
         run: |
+          echo "github.event.inputs.amd64: ${{ github.event.inputs.amd64 }}"
+          echo "inputs.amd64: ${{ inputs.amd64 }}"
           PLATFORMS="linux/amd64"
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             PLATFORMS=""
-            [[ ${{ github.event.inputs.amd64 }} ]] && PLATFORMS+="linux/amd64,"
-            [[ ${{ github.event.inputs.armhf }} ]] && PLATFORMS+="linux/armhf,"
-            [[ ${{ github.event.inputs.arm64 }} ]] && PLATFORMS+="linux/arm64,"
+            [[ ${{ inputs.amd64 }} == true ]] && PLATFORMS+="linux/amd64,"
+            [[ ${{ inputs.armhf }} == true ]] && PLATFORMS+="linux/armhf,"
+            [[ ${{ inputs.arm64 }} == true ]] && PLATFORMS+="linux/arm64,"
           fi
           # Remove trailing comma if present
           PLATFORMS="${PLATFORMS%,}"
