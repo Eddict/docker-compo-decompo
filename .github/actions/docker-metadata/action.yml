@@ -4,6 +4,28 @@ inputs:
   image_name:
     description: 'The image name (without owner)'
     required: true
+outputs:
+  tags:
+    description: "Docker image tags"
+    value: ${{ steps.prep.outputs.tags }}
+  title:
+    description: "Image title"
+    value: ${{ steps.prep.outputs.title }}
+  version:
+    description: "Image version"
+    value: ${{ steps.prep.outputs.version }}
+  created:
+    description: "Image creation time"
+    value: ${{ steps.prep.outputs.created }}
+  buildx_cache:
+    description: "Buildx cache path"
+    value: ${{ steps.prep.outputs.buildx_cache }}
+  registry:
+    description: "Registry URL"
+    value: ${{ steps.prep.outputs.registry }}
+  platforms:
+    description: "Target platforms"
+    value: ${{ steps.prep.outputs.platforms }}
 runs:
   using: 'composite'
   steps:
