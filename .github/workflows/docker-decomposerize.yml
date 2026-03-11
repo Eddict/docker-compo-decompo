@@ -1,13 +1,9 @@
 name: Build and Push Docker decomposerize Image
 on:
   push:
-    branches:
-      - main
-    paths-ignore:
-      - 'docker/autocompose/**'
-      - 'docker/combined/**'
-      - '.github/workflows/docker-autocompose.yml'
-      - '.github/workflows/docker-combined.yml'
+    paths:
+      - 'docker/decomposerize/**'
+      - '.github/workflows/docker-decomposerize.yml'
   workflow_dispatch:
 
 jobs:

@@ -1,13 +1,12 @@
 name: Build and Push Docker autocompose Image
 on:
   push:
-    branches-ignore:
-      - 'dependabot/**'
-    paths-ignore:
-      - 'docker/combined/**'
-      - 'docker/decomposerize/**'
-      - '.github/workflows/docker-combined.yml'
-      - '.github/workflows/docker-decomposerize.yml'
+    paths:
+      - 'src/autocompose.py'
+      - 'docker/autocompose/**'
+      - '.github/workflows/docker-autocompose.yml'
+      - 'pyproject.toml'
+      - 'README.md'
   schedule:
     - cron: '0 5 * * *'
   workflow_dispatch:
