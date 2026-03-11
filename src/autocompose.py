@@ -168,8 +168,47 @@ def generate(cname, createvolumes=False):
 
     cattrs = c.containers.get(cid).attrs
 
-    # Build yaml dict structure
+    # Get image defaults for comparison
+    image_name = cattrs.get("Config", {}).get("Image", None)
+    image_attrs = None
+    image_defaults = {}
+    if image_name:
+        try:
+            image = c.images.get(image_name)
+            image_attrs = image.attrs
+        except Exception:
+            image_attrs = None
+    if image_attrs:
+        # Extract config defaults from image
+        img_cfg = image_attrs.get("Config", {})
+        img_hostcfg = image_attrs.get("ContainerConfig", {})
+        image_defaults = {
+            "cap_drop": img_hostcfg.get("CapDrop", None),
+            "cgroup_parent": img_hostcfg.get("CgroupParent", None),
+            "devices": img_hostcfg.get("Devices", []),
+            "dns": img_hostcfg.get("Dns", None),
+            "dns_search": img_hostcfg.get("DnsSearch", None),
+            "environment": img_cfg.get("Env", None),
+            "extra_hosts": img_hostcfg.get("ExtraHosts", None),
+            "entrypoint": img_cfg.get("Entrypoint", None),
+            "user": img_cfg.get("User", None),
+            "working_dir": img_cfg.get("WorkingDir", None),
+            "domainname": img_cfg.get("Domainname", None),
+            "hostname": img_cfg.get("Hostname", None),
+            "ipc": img_hostcfg.get("IpcMode", None),
+            "mac_address": img_hostcfg.get("MacAddress", None),
+            "privileged": img_hostcfg.get("Privileged", None),
+            "restart": img_hostcfg.get("RestartPolicy", {}).get("Name", None),
+            "read_only": img_hostcfg.get("ReadonlyRootfs", None),
+            "stdin_open": img_cfg.get("OpenStdin", None),
+            "tty": img_cfg.get("Tty", None),
+            "image": image_name,
+            # Add more as needed
+        }
+    else:
+        image_defaults = {}
 
+    # Build yaml dict structure
     cfile = {}
     cfile[cattrs.get("Name")[1:]] = {}
     ct = cfile[cattrs.get("Name")[1:]]
@@ -357,8 +396,13 @@ def generate(cname, createvolumes=False):
     for key in values:
         value = values[key]
         if value not in IGNORE_VALUES:
-            if not incl_defaults and is_minimal_default(key, value):
-                continue
+            # If not including defaults, skip if value matches Compose minimal default or image default
+            if not incl_defaults:
+                if is_minimal_default(key, value):
+                    continue
+                # Compare to image default if available
+                if key in image_defaults and value == image_defaults[key]:
+                    continue
             ct[key] = value
 
     return cfile, networks, volumes
