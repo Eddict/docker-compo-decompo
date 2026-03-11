@@ -66,9 +66,18 @@ debug_echo "Pulled $DOCKER_IMAGE successfully"
 containers=$(docker ps -a --format '{{.Names}}')
 
 for container in $containers; do
+
   info_echo "Processing container: $container"
   mkdir -p "$container"
   debug_echo "Created directory: $container"
+
+  # Get the image name for this container
+  image_name=$(docker inspect --format='{{.Config.Image}}' "$container")
+  debug_echo "Image for $container: $image_name"
+
+  # Save docker image inspect output for reference
+  docker image inspect "$image_name" > "$container/image-inspect.json" || debug_echo "Could not inspect image $image_name"
+  debug_echo "Saved image inspect to $container/image-inspect.json"
 
   # Generate docker-compose.yaml for this container
   debug_echo "Running autocompose for $container"
