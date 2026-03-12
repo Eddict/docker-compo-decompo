@@ -11,17 +11,17 @@ RUN corepack enable \
 COPY decomposerize/ .
 
 # right before RUN yarn install --immutable
-RUN echo "=== files in /build ===" && ls -la \
- && echo "=== package.json ===" && cat package.json \
- && echo "=== yarn.lock head ===" && head -n 40 yarn.lock
+# RUN echo "=== files in /build ===" && ls -la \
+#   && echo "=== package.json ===" && cat package.json \
+#   && echo "=== yarn.lock head ===" && head -n 40 yarn.lock
 
 # Install deps (Yarn v3+ prefers --immutable)
 # RUN yarn install --immutable
 # Install deps (Yarn v1 uses --frozen-lockfile)
-RUN yarn install --frozen-lockfile
-
-# Build and install globally
-RUN yarn build \
+RUN yarn install --frozen-lockfile --non-interactive \
+  && yarn cache clean
+# Build using the repository Makefile, then install globally
+RUN make build \
   && npm install -g . \
   && npm cache clean --force
 
