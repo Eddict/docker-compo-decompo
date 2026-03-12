@@ -5,14 +5,11 @@ WORKDIR /build
 # Enable corepack and prepare yarn
 RUN corepack enable && corepack prepare yarn@stable --activate
 
-# Copy only lockfile and package manifest first for caching
-COPY decomposerize/package.json decomposerize/yarn.lock* ./ 
+# Copy entire decomposerize workspace so Yarn sees all manifests
+COPY decomposerize/ .
 
 # Install deps (Yarn v3+ prefers --immutable)
 RUN yarn install --immutable
-
-# Copy the rest of the source
-COPY decomposerize/ .
 
 # Build and install globally
 RUN yarn build \
