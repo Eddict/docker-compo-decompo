@@ -1,0 +1,121 @@
+name: Docker Build Template
+
+on:
+  workflow_call:
+    inputs:
+      checkout:
+        required: false
+        type: boolean
+        default: true
+      image_name:
+        required: true
+        type: string
+      dockerfile:
+        required: true
+        type: string
+      amd64:
+        required: false
+        type: boolean
+        default: true
+      armhf:
+        required: false
+        type: boolean
+        default: false
+      arm64:
+        required: false
+        type: boolean
+        default: false
+      build_args:
+        required: false
+        type: string
+        default: ''
+      cache_key:
+        required: false
+        type: string
+        default: ''
+
+env:
+  AMD64: true
+  ARMHF: false
+  ARM64: false
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        if: ${{ inputs.checkout }}
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Prepare Docker Metadata (inline)
+        id: metadata
+        shell: bash
+        env:
+          REGISTRY: ghcr.io
+          BUILDX_CACHE: /tmp/.buildx-cache
+        run: |
+          PLATFORMS=""
+          [[ "${{ inputs.amd64 || env.AMD64 }}" == "true" ]] && PLATFORMS+="linux/amd64,"
+          [[ "${{ inputs.armhf || env.ARMHF }}" == "true" ]] && PLATFORMS+="linux/armhf,"
+          [[ "${{ inputs.arm64 || env.ARM64 }}" == "true" ]] && PLATFORMS+="linux/arm64,"
+          PLATFORMS="${PLATFORMS%,}"
+          OWNER="$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
+          DOCKER_IMAGE=${{ env.REGISTRY }}/${OWNER}/${{ inputs.image_name }}
+          VERSION="latest"
+          TAGS="${DOCKER_IMAGE}:$VERSION"
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "title=${GITHUB_REPOSITORY}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+          echo "buildx_cache=${{ env.BUILDX_CACHE }}" >> $GITHUB_OUTPUT
+          echo "registry=${{ env.REGISTRY }}" >> $GITHUB_OUTPUT
+          echo "platforms=${PLATFORMS}" >> $GITHUB_OUTPUT
+
+      - name: Set up QEMU
+        if: ${{ steps.metadata.outputs.platforms != 'linux/amd64' }}
+        uses: docker/setup-qemu-action@v4
+        with:
+          platforms: ${{ steps.metadata.outputs.platforms }}
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Cache Docker layers
+        uses: actions/cache@v5
+        with:
+          path: ${{ steps.metadata.outputs.buildx_cache }}
+          key: ${{ inputs.cache_key != '' && inputs.cache_key || format('{0}-buildx-{1}', runner.os, github.sha) }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Login to Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ steps.metadata.outputs.registry }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Build and push image
+        id: docker_build
+        uses: docker/build-push-action@v7
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          file: ${{ inputs.dockerfile }}
+          platforms: ${{ steps.metadata.outputs.platforms }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: |
+            org.opencontainers.image.title=${{ steps.metadata.outputs.title }}
+            org.opencontainers.image.version=${{ steps.metadata.outputs.version }}
+            org.opencontainers.image.created=${{ steps.metadata.outputs.created }}
+          cache-from: type=local,src=${{ steps.metadata.outputs.buildx_cache }}
+          cache-to: type=local,dest=${{ steps.metadata.outputs.buildx_cache }},mode=max
+          build-args: ${{ inputs.build_args }}
+
+      - name: Image digest
+        run: echo ${{ steps.docker_build.outputs.digest }}
