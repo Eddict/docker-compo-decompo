@@ -45,6 +45,8 @@ RUN apk add --no-cache python3 py3-pip nodejs \
   && python3 -m pip install --no-cache-dir poetry${POETRY_VERSION:+==${POETRY_VERSION}} \
   && poetry --version
   # && python3 -m pip install --no-cache-dir "poetry==1.8.1"
+RUN echo "POETRY_VERSION: ${POETRY_VERSION}"
+RUN echo "POETRY_VERSION_ext: ${POETRY_VERSION:+==${POETRY_VERSION}}"
 RUN poetry --version
 
 # Copy decomposerize runtime files and binary from build stage
