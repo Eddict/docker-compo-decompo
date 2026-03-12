@@ -33,11 +33,13 @@ jobs:
       cache_key: ${{ steps.cachekey.outputs.CACHE_KEY }}
     steps:
       - name: Checkout
+        id: checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Checkout decomposerize (fork)
+        id: checkout-decompo
         uses: actions/checkout@v6
         with:
           repository: ${{ github.repository_owner }}/decomposerize
@@ -49,6 +51,7 @@ jobs:
         run: echo "CACHE_KEY=${{ runner.os }}-buildx-${{ hashFiles('decomposerize/yarn.lock', 'poetry.lock') }}" >> $GITHUB_OUTPUT
 
   build-and-push:
+    needs: checkout
     uses: ./.github/workflows/docker-build-template.yml
     with:
       checkout: false

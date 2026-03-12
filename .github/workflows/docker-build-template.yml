@@ -44,6 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
+        id: checkout
         if: ${{ inputs.checkout }}
         uses: actions/checkout@v6
         with:
@@ -51,6 +52,7 @@ jobs:
 
       - name: Prepare Docker Metadata (inline)
         id: metadata
+        if: always()
         shell: bash
         env:
           REGISTRY: ghcr.io
@@ -74,6 +76,7 @@ jobs:
           echo "platforms=${PLATFORMS}" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
+        id: qemu
         if: ${{ steps.metadata.outputs.platforms != 'linux/amd64' }}
         uses: docker/setup-qemu-action@v4
         with:
@@ -84,6 +87,7 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: Cache Docker layers
+        id: cache
         uses: actions/cache@v5
         with:
           path: ${{ steps.metadata.outputs.buildx_cache }}
@@ -92,6 +96,7 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Login to Container Registry
+        id: login
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
@@ -118,4 +123,5 @@ jobs:
           build-args: ${{ inputs.build_args }}
 
       - name: Image digest
+        id: digest
         run: echo ${{ steps.docker_build.outputs.digest }}
