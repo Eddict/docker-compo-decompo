@@ -4,7 +4,7 @@ FROM node:22-alpine3.21 AS build
 WORKDIR /build
 
 # Install system build tools needed for `make build`
-RUN apk add --no-cache make build-base python3 git
+RUN apk add --no-cache make build-base python3 git openssh-client
 
 # Enable corepack and prepare yarn
 RUN corepack enable \
@@ -48,7 +48,7 @@ RUN make build
 
 # Install the CLI package globally (install from the package folder)
 # Adjust path if the CLI package lives elsewhere in the workspace
-RUN npm install -g packages/decomposerize \
+RUN npm install -g ./packages/decomposerize \
   && yarn cache clean \
   && npm cache clean --force
 
@@ -57,8 +57,8 @@ ARG POETRY_VERSION=
 FROM python:3.13-alpine3.21
 LABEL org.opencontainers.image.source=https://github.com/Eddict/docker-autocompose
 
-# Install Poetry and git (needed for npm/yarn dependencies from git)
-RUN apk add --no-cache python3 py3-pip nodejs git \
+# Install Poetry and runtime dependencies (including Node for decomposerize CLI)
+RUN apk add --no-cache python3 py3-pip nodejs \
   && python3 -m pip install --no-cache-dir poetry${POETRY_VERSION:+==${POETRY_VERSION}} \
   && poetry --version
   # && python3 -m pip install --no-cache-dir "poetry==1.8.1"
