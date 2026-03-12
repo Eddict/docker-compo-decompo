@@ -13,38 +13,18 @@ RUN corepack enable \
 
 # # Copy entire decomposerize workspace so Yarn sees all manifests
 # COPY decomposerize/ .
-# Copy manifests first to leverage Docker cache for dependencies
-COPY decomposerize/package.json decomposerize/yarn.lock ./decomposerize/
-# If you want even better caching, copy workspace package.json files explicitly:
-# COPY decomposerize/packages/decomposerize/package.json decomposerize/packages/decomposerize/package.json
-# (add other workspace package.json paths as needed)
 
-WORKDIR /build/decomposerize
-
-# right before RUN yarn install --immutable
-# RUN echo "=== files in /build ===" && ls -la \
-#   && echo "=== package.json ===" && cat package.json \
-#   && echo "=== yarn.lock head ===" && head -n 40 yarn.lock
-
-# Install deps (Yarn v3+ prefers --immutable)
-# RUN yarn install --immutable
-# Install deps (Yarn v1 uses --frozen-lockfile)
-RUN yarn install --frozen-lockfile --non-interactive \
-  && yarn cache clean
-# # Build using the repository Makefile, then install globally
-# RUN make build \
-#   && npm install -g . \
-#   && npm cache clean --force
-
-# Copy the rest of the decomposerize repo
-WORKDIR /build
+# Copy the entire decomposerize repo (including Makefile and packages)
 COPY decomposerize/ ./decomposerize/
 
-# Build the project from the repo root as per contributing instructions
+# Set working directory to the root of the decomposerize repo
 WORKDIR /build/decomposerize
 
+# Install dependencies
+RUN yarn install --frozen-lockfile --non-interactive \
+  && yarn cache clean
 
-# Build using the repository Makefile
+# Build using the repository Makefile (Makefile is now present)
 RUN make build \
   && echo '=== DEBUG: dist contents after build ===' \
   && ls -la ./packages/decomposerize/dist || echo 'dist directory missing'
