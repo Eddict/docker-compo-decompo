@@ -191,6 +191,8 @@ jobs:
             org.opencontainers.image.created=${{ steps.metadata.outputs.created }}
           cache-from: type=local,src=${{ steps.metadata.outputs.buildx_cache }}
           cache-to: type=local,dest=${{ steps.metadata.outputs.buildx_cache }},mode=max
+          build-args: |
+            POETRY_VERSION=1.8.2
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
