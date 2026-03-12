@@ -33,7 +33,7 @@ RUN npm install -g ./packages/decomposerize \
 # Final stage: runtime image without Node build tools
 FROM python:3.13-alpine3.21
 ARG POETRY_VERSION
-LABEL org.opencontainers.image.source=https://github.com/Eddict/docker-autocompose
+LABEL org.opencontainers.image.source=https://github.com/Eddict/docker-compo-decompo
 
 # Install Poetry and runtime dependencies (including Node for decomposerize CLI)
 RUN apk add --no-cache python3 py3-pip nodejs \
@@ -52,7 +52,7 @@ COPY src ./src
 # Install Python dependencies
 RUN poetry install --no-interaction --no-ansi
 
-COPY docker/combined/entrypoint.sh /entrypoint.sh
+COPY docker/compo-decompo/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
