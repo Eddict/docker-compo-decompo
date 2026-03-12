@@ -3,7 +3,9 @@ FROM node:22-alpine3.21 AS build
 WORKDIR /build
 
 # Enable corepack and prepare yarn
-RUN corepack enable && corepack prepare yarn@stable --activate
+RUN corepack enable \
+  && corepack prepare yarn@1.22.19 --activate
+  # && corepack prepare yarn@stable --activate
 
 # Copy entire decomposerize workspace so Yarn sees all manifests
 COPY decomposerize/ .
@@ -14,7 +16,9 @@ RUN echo "=== files in /build ===" && ls -la \
  && echo "=== yarn.lock head ===" && head -n 40 yarn.lock
 
 # Install deps (Yarn v3+ prefers --immutable)
-RUN yarn install --immutable
+# RUN yarn install --immutable
+# Install deps (Yarn v1 uses --frozen-lockfile)
+RUN yarn install --frozen-lockfile
 
 # Build and install globally
 RUN yarn build \
