@@ -32,6 +32,9 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [linux/amd64, linux/arm64]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -45,24 +48,14 @@ jobs:
           path: decomposerize
           fetch-depth: 0
 
-      - name: Set platforms from workflow inputs
-        id: platforms
-        run: |
-          PLATFORMS=""
-          [[ ${{ inputs.amd64 || env.AMD64 }} == true ]] && PLATFORMS+="linux/amd64,"
-          [[ ${{ inputs.armhf || env.ARMHF }} == true ]] && PLATFORMS+="linux/armhf,"
-          [[ ${{ inputs.arm64 || env.ARM64 }} == true ]] && PLATFORMS+="linux/arm64,"
-          # Remove trailing comma if present
-          PLATFORMS="${PLATFORMS%,}"
-          echo "PLATFORMS=$PLATFORMS"
-          echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
-
       - name: Call metadata preparation step
         id: metadata
         uses: ./.github/actions/docker-metadata
         with:
           image_name: docker-compo-decompo
-          platforms: ${{ steps.platforms.outputs.platforms }}
+          linux_amd64: ${{ inputs.amd64 || env.AMD64 }}
+          linux_armhf: ${{ inputs.armhf || env.ARMHF }}
+          linux_arm64: ${{ inputs.arm64 || env.ARM64 }}
 
       - name: Set up QEMU
         if: ${{ steps.metadata.outputs.platforms != 'linux/amd64' }}

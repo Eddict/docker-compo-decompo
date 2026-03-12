@@ -4,9 +4,12 @@ inputs:
   image_name:
     description: 'The image name (without owner)'
     required: true
-  platforms:
-    description: 'Target platforms (comma-separated, e.g. linux/amd64,linux/arm64)'
-    default: linux/amd64
+  linux_amd64:
+    type: boolean
+  linux_armhf:
+    type: boolean
+  linux_arm64:
+    type: boolean
 outputs:
   tags:
     description: "Docker image tags"
@@ -36,9 +39,16 @@ runs:
       id: prep
       env:
         REGISTRY: ghcr.io
-        PLATFORMS: ${{ inputs.platforms }}
         BUILDX_CACHE: /tmp/.buildx-cache
       run: |
+        PLATFORMS=""
+        [[ ${{ inputs.linux_amd64 }} == true ]] && PLATFORMS+="linux/amd64,"
+        [[ ${{ inputs.linux_armhf }} == true ]] && PLATFORMS+="linux/armhf,"
+        [[ ${{ inputs.linux_arm64 }} == true ]] && PLATFORMS+="linux/arm64,"
+        # Remove trailing comma if present
+        PLATFORMS="${PLATFORMS%,}"
+        # echo "platforms=$PLATFORMS" >> $GITHUB_OUTPUT
+
         OWNER="$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
         DOCKER_IMAGE=${{ env.REGISTRY }}/${OWNER}/${{ inputs.image_name }}
         if [ "${{ github.ref_name }}" == "main" ];then VERSION=latest;fi
@@ -52,4 +62,4 @@ runs:
         echo "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
         echo "buildx_cache=${{ env.BUILDX_CACHE }}" >> $GITHUB_OUTPUT
         echo "registry=${{ env.REGISTRY }}" >> $GITHUB_OUTPUT
-        echo "platforms=${{ env.PLATFORMS }}" >> $GITHUB_OUTPUT
+        echo "platforms=${PLATFORMS}" >> $GITHUB_OUTPUT
