@@ -51,8 +51,10 @@ RUN poetry --version
 
 # Copy decomposerize runtime files and binary from build stage
 
+
 COPY --from=build /usr/local/lib/node_modules/decomposerize /usr/local/lib/node_modules/decomposerize
-COPY --from=build /usr/local/bin/decomposerize /usr/local/bin/decomposerize
+# Create symlink for CLI entrypoint so __dirname resolves correctly
+RUN ln -s /usr/local/lib/node_modules/decomposerize/cli.js /usr/local/bin/decomposerize
 
 # Debug: Inspect CLI entrypoint and dist contents before smoke test
 RUN echo '=== /usr/local/bin/decomposerize (head) ===' \
