@@ -24,7 +24,7 @@ on:
         default: false
 
 jobs:
-  checkout:
+  init:
     runs-on: ubuntu-latest
     # strategy:
     #   matrix:
@@ -51,7 +51,7 @@ jobs:
         run: echo "CACHE_KEY=${{ runner.os }}-buildx-${{ hashFiles('decomposerize/yarn.lock', 'poetry.lock') }}" >> $GITHUB_OUTPUT
 
   build-and-push:
-    needs: checkout
+    needs: init
     uses: ./.github/workflows/docker-build-template.yml
     with:
       checkout: false
@@ -61,4 +61,4 @@ jobs:
       image_name: docker-compo-decompo
       dockerfile: ./docker/compo-decompo/Dockerfile
       build_args: POETRY_VERSION=1.8.5
-      cache_key:  ${{ needs.checkout.outputs.cache_key }}
+      cache_key:  ${{ needs.init.outputs.cache_key }}
