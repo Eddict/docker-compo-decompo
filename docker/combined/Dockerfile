@@ -8,8 +8,8 @@ RUN corepack enable && corepack prepare yarn@stable --activate
 # Copy only lockfile and package manifest first for caching
 COPY decomposerize/package.json decomposerize/yarn.lock* ./ 
 
-# Install dependencies (works with Yarn v3 or v1)
-RUN (yarn install --immutable || yarn install --frozen-lockfile)
+# Install deps (Yarn v3+ prefers --immutable)
+RUN yarn install --immutable
 
 # Copy the rest of the source
 COPY decomposerize/ .
