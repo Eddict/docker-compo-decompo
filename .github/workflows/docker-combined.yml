@@ -44,6 +44,21 @@ jobs:
           path: decomposerize
           fetch-depth: 0
 
+      - name: Debug Yarn install on runner
+        working-directory: decomposerize
+        run: |
+          corepack enable
+          corepack prepare yarn@stable --activate
+          yarn --version
+          echo "---- ls decomposerize ----"
+          ls -la
+          echo "---- package.json ----"
+          cat package.json
+          echo "---- yarn.lock head ----"
+          head -n 40 yarn.lock
+          echo "---- run immutable install ----"
+          yarn install --immutable
+
       - name: Set platforms from workflow inputs
         id: platforms
         run: |
@@ -81,6 +96,7 @@ jobs:
         with:
           path: ${{ steps.metadata.outputs.buildx_cache }}
           key: ${{ runner.os }}-buildx-${{ github.sha }}
+          # key: ${{ runner.os }}-buildx-${{ hashFiles('decomposerize/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-buildx-
 
@@ -101,6 +117,7 @@ jobs:
           file: ./docker/combined/Dockerfile
           platforms: ${{ steps.metadata.outputs.platforms }}
           push: ${{ github.event_name != 'pull_request' }}
+          no-cache: true
           tags: ${{ steps.metadata.outputs.tags }}
           labels: |
             org.opencontainers.image.title=${{ steps.metadata.outputs.title }}
