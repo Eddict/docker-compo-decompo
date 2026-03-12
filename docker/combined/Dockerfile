@@ -1,23 +1,50 @@
-FROM python:3.12-alpine
-LABEL org.opencontainers.image.source=https://github.com/Red5d/docker-autocompose
+# Build stage: build decomposerize from source
+FROM node:22-alpine3.21 AS build
+WORKDIR /build
 
-# Install Poetry and Node.js
-RUN apk add --no-cache poetry nodejs npm
+# Enable corepack and prepare yarn
+RUN corepack enable && corepack prepare yarn@stable --activate
 
-# Install decomposerize globally
-RUN npm install -g decomposerize@latest --omit=dev --no-audit --no-fund && npm cache clean --force
+# Copy only lockfile and package manifest first for caching
+COPY decomposerize/package.json decomposerize/yarn.lock* ./ 
+
+# Install dependencies (works with Yarn v3 or v1)
+RUN (yarn install --immutable || yarn install --frozen-lockfile)
+
+# Copy the rest of the source
+COPY decomposerize/ .
+
+# Build and install globally
+RUN yarn build \
+  && npm install -g . \
+  && npm cache clean --force
+
+# Final stage: runtime image without Node build tools
+FROM python:3.13-alpine3.21
+LABEL org.opencontainers.image.source=https://github.com/Eddict/docker-autocompose
+
+# Install Poetry
+RUN apk add --no-cache python3 py3-pip nodejs \
+  && python3 -m pip install --no-cache-dir poetry \
+  && poetry --version
+  # && python3 -m pip install --no-cache-dir "poetry==1.8.1"
+
+# Copy decomposerize runtime files and binary from build stage
+COPY --from=build /usr/local/lib/node_modules/decomposerize /usr/local/lib/node_modules/decomposerize
+COPY --from=build /usr/local/bin/decomposerize /usr/local/bin/decomposerize
+
+# Optional smoke test to ensure CLI works
+RUN /usr/local/bin/decomposerize --version
 
 WORKDIR /usr/src/app
-
 # Copy Python project files
 COPY poetry.lock pyproject.toml README.md ./
 COPY src ./src
-
 # Install Python dependencies
-RUN poetry install
-
+RUN poetry install --no-interaction --no-ansi
 
 COPY docker/combined/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/bin/sh"]
