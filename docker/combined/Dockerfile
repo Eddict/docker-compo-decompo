@@ -11,9 +11,6 @@ RUN corepack enable \
   && corepack prepare yarn@${YARN_VERSION} --activate
   # && corepack prepare yarn@stable --activate
 
-# # Copy entire decomposerize workspace so Yarn sees all manifests
-# COPY decomposerize/ .
-
 # Copy the entire decomposerize repo (including Makefile and packages)
 COPY decomposerize/ ./decomposerize/
 
@@ -25,9 +22,7 @@ RUN yarn install --frozen-lockfile --non-interactive \
   && yarn cache clean
 
 # Build using the repository Makefile (Makefile is now present)
-RUN make build \
-  && echo '=== DEBUG: dist contents after build ===' \
-  && ls -la ./packages/decomposerize/dist || echo 'dist directory missing'
+RUN make build
 
 # Install the CLI package globally (install from the package folder)
 # Adjust path if the CLI package lives elsewhere in the workspace
@@ -42,30 +37,11 @@ LABEL org.opencontainers.image.source=https://github.com/Eddict/docker-autocompo
 
 # Install Poetry and runtime dependencies (including Node for decomposerize CLI)
 RUN apk add --no-cache python3 py3-pip nodejs \
-  && python3 -m pip install --no-cache-dir poetry${POETRY_VERSION:+==${POETRY_VERSION}} \
-  && poetry --version
-  # && python3 -m pip install --no-cache-dir "poetry==1.8.1"
-RUN echo "POETRY_VERSION: ${POETRY_VERSION}"
-RUN echo "POETRY_VERSION_ext: ${POETRY_VERSION:+==${POETRY_VERSION}}"
-RUN poetry --version
-
-# Copy decomposerize runtime files and binary from build stage
-
+  && python3 -m pip install --no-cache-dir poetry${POETRY_VERSION:+==${POETRY_VERSION}}
 
 COPY --from=build /usr/local/lib/node_modules/decomposerize /usr/local/lib/node_modules/decomposerize
 # Create symlink for CLI entrypoint so __dirname resolves correctly
 RUN ln -s /usr/local/lib/node_modules/decomposerize/cli.js /usr/local/bin/decomposerize
-
-# Debug: Inspect CLI entrypoint and dist contents before smoke test
-RUN echo '=== /usr/local/bin/decomposerize (head) ===' \
-  && head -n 10 /usr/local/bin/decomposerize \
-  && echo '=== /usr/local/lib/node_modules/decomposerize ===' \
-  && ls -la /usr/local/lib/node_modules/decomposerize \
-  && echo '=== /usr/local/lib/node_modules/decomposerize/dist ===' \
-  && ls -la /usr/local/lib/node_modules/decomposerize/dist
-
-# Optional smoke test to ensure CLI works
-RUN /usr/local/bin/decomposerize --version
 
 WORKDIR /usr/src/app
 
