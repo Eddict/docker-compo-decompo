@@ -29,38 +29,26 @@ jobs:
     # strategy:
     #   matrix:
     #     platform: [linux/amd64, linux/armhf, linux/arm64]
-    outputs:
-      cache_key: ${{ steps.cachekey.outputs.CACHE_KEY }}
     steps:
       - name: Checkout
         id: checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-
-      - name: Checkout decomposerize (fork)
-        id: checkout-decompo
-        uses: actions/checkout@v6
-        with:
-          repository: ${{ github.repository_owner }}/decomposerize
-          path: decomposerize
-          fetch-depth: 0
-
-      - name: Set cache key
-        id: cachekey
-        run: echo "CACHE_KEY=${{ runner.os }}-buildx-${{ hashFiles('decomposerize/yarn.lock', 'poetry.lock') }}" >> $GITHUB_OUTPUT
+          sparse-checkout: |
+            ./.github/workflows/docker-build-template.yml
+          sparse-checkout-cone-mode: false
 
   build-and-push:
     needs: init
     uses: ./.github/workflows/docker-build-template.yml
     with:
-      checkout: false
+      extra_checkout: true
       amd64: ${{ inputs.amd64 || true }}
       armhf: ${{ inputs.armhf || false }}
       arm64: ${{ inputs.arm64 || false }}
       image_name: docker-compo-decompo
       dockerfile: ./docker/compo-decompo/Dockerfile
       build_args: POETRY_VERSION=1.8.5
-      cache_key: ${{ needs.init.outputs.cache_key }}
     secrets:
       CR_PAT: ${{ secrets.CR_PAT }}

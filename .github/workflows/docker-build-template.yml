@@ -3,10 +3,10 @@ name: Docker Build Template
 on:
   workflow_call:
     inputs:
-      checkout:
+      extra_checkout:
         required: false
         type: boolean
-        default: true
+        default: false
       image_name:
         required: true
         type: string
@@ -43,14 +43,33 @@ jobs:
     steps:
       - name: Checkout
         id: checkout
-        if: ${{ inputs.checkout }}
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
+      - name: Checkout decomposerize (fork)
+        id: checkout-decompo
+        if: ${{ inputs.extra_checkout }}
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ github.repository_owner }}/decomposerize
+          path: decomposerize
+          fetch-depth: 0
+
+      - name: Set cache key
+        id: set-cache-key
+        if: always()
+        run: |
+          if [[ ${{ inputs.extra_checkout }} == true ]]; then
+            # GENERATED_KEY=${{ runner.os }}-buildx-${{ hashFiles('decomposerize/yarn.lock', 'poetry.lock') }}"
+            GENERATED_KEY="${{ format('{0}-buildx-{1}', runner.os, hashFiles('decomposerize/yarn.lock', 'poetry.lock')) }}"
+          else
+            GENERATED_KEY="${{ format('{0}-buildx-{1}', runner.os, github.sha) }}"
+          fi
+          echo "CACHE_KEY=$GENERATED_KEY" >> $GITHUB_OUTPUT
+
       - name: Prepare Docker Metadata (inline)
         id: metadata
-        if: always()
         shell: bash
         env:
           REGISTRY: ghcr.io
@@ -92,7 +111,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ${{ steps.metadata.outputs.buildx_cache }}
-          key: ${{ inputs.cache_key != '' && inputs.cache_key || format('{0}-buildx-{1}', runner.os, github.sha) }}
+          key: ${{ steps.metadata.outputs.cache_key }}
           restore-keys: |
             ${{ runner.os }}-buildx-
 
